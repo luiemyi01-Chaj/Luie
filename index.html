@@ -709,6 +709,7 @@ body{height:100%;height:100dvh;overflow:hidden;font-family:'DM Sans',sans-serif;
     <div class="pi" id="pi-jg" onclick="focusPlace('jg')"><div><div class="pi-n">Option H — Parnas Hotel Jeju</div><div class="pi-s">Jungmun · 5-star · Ocean view<br>Oct 1–5 · +82-64-801-5555</div></div></div>
     <div class="pi" id="pi-jh" onclick="focusPlace('jh')"><div><div class="pi-n">Option I — Airbnb Villa (12 guests)</div><div class="pi-s">Private villa · Jeju Island<br>Oct 1–5 · View listing for pricing</div></div></div>
     <div class="pi" id="pi-ji" onclick="focusPlace('ji')"><div><div class="pi-n">Option J — Airbnb (12 guests)</div><div class="pi-s">Private group Airbnb · Jeju Island<br>Oct 1–5 · View listing for details</div></div></div>
+    <div class="pi" id="pi-jn" onclick="focusPlace('jn')"><div><div class="pi-n">Option N — Jeju Hanok Hotel Hallagung 🏨</div><div class="pi-s">Seogwipo · Traditional Hanok Hotel<br>Oct 1–5 · ~$185 CAD/night · Hotels.com</div></div></div>
     <div class="pi" id="pi-jk" onclick="focusPlace('jk')"><div><div class="pi-n">Option K — Jeju Airbnb (×2 units)</div><div class="pi-s">6 guests per unit · Book 2 together<br>Oct 1–5 · View listing for pricing</div></div></div>
     <div class="pi" id="pi-jl" onclick="focusPlace('jl')"><div><div class="pi-n">Option L — Jeju Airbnb (×2 units)</div><div class="pi-s">6 guests per unit · Book 2 together<br>Oct 1–5 · View listing for pricing</div></div></div>
     <div class="pi" id="pi-jm" onclick="focusPlace('jm')"><div><div class="pi-n">Option M — Jeju Airbnb (×2 units)</div><div class="pi-s">6 guests per unit · Book 2 together<br>Oct 1–5 · View listing for pricing</div></div></div>
@@ -1153,6 +1154,7 @@ var AIRBNBS={
   jh:{id:'jh',lat:33.4600,lng:126.5600,city:'airbnb',name:'Option I — Airbnb Villa (12 guests)',sub:'Private villa · 12 guests · Jeju Island',rows:[{l:'Type',v:'Private Villa'},{l:'Guests',v:'12 people'},{l:'Check-in',v:'Oct 1, 2026'},{l:'Check-out',v:'Oct 5, 2026'},{l:'Note',v:'View listing for pricing'}],url:'https://www.airbnb.ca/rooms/1511188696905579596?adults=12&check_in=2026-10-01&check_out=2026-10-05'},
   ji:{id:'ji',lat:33.3900,lng:126.5700,city:'airbnb',name:'Option J — Jeju Airbnb (12 guests)',sub:'Private group Airbnb · Jeju Island · Oct 1–5',rows:[{l:'Type',v:'Private Airbnb'},{l:'Guests',v:'12 people'},{l:'Stay',v:'Oct 1–5 (4 nights)'},{l:'Note',v:'View listing for full details'}],url:'https://www.airbnb.ca/rooms/1288173711531670392'},
   jk:{id:'jk',lat:33.4890,lng:126.4983,city:'airbnb',name:'Option K — Jeju Airbnb (×2 units)',sub:'6 guests/unit · Book 2 together for 12 · Jeju',rows:[{l:'Type',v:'Airbnb (×2 units)'},{l:'Guests',v:'6 per unit · 12 total'},{l:'Stay',v:'Oct 1–5 (4 nights)'},{l:'Note',v:'Book both units simultaneously'},{l:'Location',v:'Jeju Island'}],url:'https://www.airbnb.ca/rooms/1168410777869436562'},
+  jn:{id:'jn',lat:33.25412,lng:126.560074,city:'airbnb',name:'Option N — Jeju Hanok Hotel Hallagung',sub:'Traditional Hanok Hotel · Seogwipo · Oct 1–5',rows:[{l:'Type',v:'🏨 Hanok Hotel'},{l:'Location',v:'Seogwipo, Jeju'},{l:'Near',v:'Seogwipo city centre'},{l:'Stay',v:'Oct 1–5 (4 nights)'},{l:'Rate',v:'~$185 CAD/night'},{l:'Note',v:'Traditional Korean architecture'}],url:'https://ca.hotels.com/ho1149102720/'},
   jl:{id:'jl',lat:33.3650,lng:126.5300,city:'airbnb',name:'Option L — Jeju Airbnb (×2 units)',sub:'6 guests/unit · Book 2 together for 12 · Jeju',rows:[{l:'Type',v:'Airbnb (×2 units)'},{l:'Guests',v:'6 per unit · 12 total'},{l:'Stay',v:'Oct 1–5 (4 nights)'},{l:'Note',v:'Book both units simultaneously'},{l:'Location',v:'Jeju Island'}],url:'https://www.airbnb.ca/rooms/554872906016348353'},
   jm:{id:'jm',lat:33.2800,lng:126.3900,city:'airbnb',name:'Option M — Jeju Airbnb (×2 units)',sub:'6 guests/unit · Book 2 together for 12 · Jeju',rows:[{l:'Type',v:'Airbnb (×2 units)'},{l:'Guests',v:'6 per unit · 12 total'},{l:'Stay',v:'Oct 1–5 (4 nights)'},{l:'Note',v:'Book both units simultaneously'},{l:'Location',v:'Jeju Island'}],url:'https://www.airbnb.ca/rooms/1194502517485663166'}
 };
@@ -1198,7 +1200,7 @@ function markerMatchesFilter(p,f){
   if(p.city==='airbnb'){
     if(f==='busan'&&(p.id==='ba1'||p.id==='ba2'||p.id==='ba3'))return true;
     if(f==='seoul'&&(p.id==='a1'||p.id==='a2'||p.id==='a3'))return true;
-    if(f==='jeju'&&(p.id==='jf'||p.id==='jg'||p.id==='jh'||p.id==='ji'||p.id==='jk'||p.id==='jl'||p.id==='jm'))return true;
+    if(f==='jeju'&&(p.id==='jf'||p.id==='jg'||p.id==='jh'||p.id==='ji'||p.id==='jk'||p.id==='jl'||p.id==='jm'||p.id==='jn'))return true;
   }
   return false;
 }
@@ -1210,7 +1212,7 @@ function drawMarkers(){
     var color=COLORS[p.city]||'#c0392b';
     var el=document.createElement('div');
     if(p.city==='airbnb'){
-      var lbl={a1:'A',a2:'B',a3:'C',ba1:'D',ba2:'E',ba3:'F',jf:'G',jg:'H',jh:'I',ji:'J',jk:'K',jl:'L',jm:'M'}[p.id]||'?';
+      var lbl={a1:'A',a2:'B',a3:'C',ba1:'D',ba2:'E',ba3:'F',jf:'G',jg:'H',jh:'I',ji:'J',jk:'K',jl:'L',jm:'M',jn:'N'}[p.id]||'?';
       el.innerHTML='<div style="background:#FF5A5F;color:#fff;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.4)"><span style="transform:rotate(45deg)">'+lbl+'</span></div>';
     }else if(p.id==='icn'){
       el.innerHTML='<div style="background:#1a1a2e;color:#d4a853;padding:3px 7px;border-radius:10px;font-size:9px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.4);border:1px solid #d4a853">✈ ICN</div>';
@@ -1225,7 +1227,7 @@ function drawMarkers(){
   });
 }
 
-function showPopup(p){var color=COLORS[p.city]||'#888';var cityLabel={seoul:'Seoul',busan:'Busan',jeju:'Jeju Island',daytrip:'Day Trip',airbnb:'Airbnb'}[p.city]||p.city;var inner='<div class="pu-h"><span class="pu-tag" style="background:'+color+'">'+cityLabel+'</span><div class="pu-ti">'+p.name+'</div></div><div class="pu-bd">';if(p.rows){inner+='<div class="pu-rows">'+p.rows.map(function(r){return'<div class="pu-row"><span class="pu-lbl">'+r.l+'</span><span class="pu-val">'+r.v+'</span></div>';}).join('')+'</div><a href="'+p.url+'" target="_blank" class="pu-btn">View on Airbnb →</a>';}else{inner+='<div class="pu-desc">'+p.sub+'</div>';}inner+='</div>';var pu=document.getElementById('popup');document.getElementById('pu-inner').innerHTML=inner;pu.style.display='block';var pt=map.latLngToContainerPoint([p.lat,p.lng]);var wrap=document.getElementById('mapwrap');var W=wrap.clientWidth,H=wrap.clientHeight;var pw=250,ph=180;var left=pt.x+15;var top=pt.y-20;if(left+pw>W-10)left=pt.x-pw-15;if(top+ph>H-10)top=H-ph-10;if(top<5)top=5;if(left<5)left=5;pu.style.left=left+'px';pu.style.top=top+'px';}
+function showPopup(p){var color=COLORS[p.city]||'#888';var cityLabel={seoul:'Seoul',busan:'Busan',jeju:'Jeju Island',daytrip:'Day Trip',airbnb:'Airbnb'}[p.city]||p.city;var inner='<div class="pu-h"><span class="pu-tag" style="background:'+color+'">'+cityLabel+'</span><div class="pu-ti">'+p.name+'</div></div><div class="pu-bd">';if(p.rows){var btnLabel=p.url&&p.url.indexOf('hotels.com')!==-1?'View on Hotels.com →':'View on Airbnb →';inner+='<div class="pu-rows">'+p.rows.map(function(r){return'<div class="pu-row"><span class="pu-lbl">'+r.l+'</span><span class="pu-val">'+r.v+'</span></div>';}).join('')+'</div><a href="'+p.url+'" target="_blank" class="pu-btn">'+btnLabel+'</a>';}else{inner+='<div class="pu-desc">'+p.sub+'</div>';}inner+='</div>';var pu=document.getElementById('popup');document.getElementById('pu-inner').innerHTML=inner;pu.style.display='block';var pt=map.latLngToContainerPoint([p.lat,p.lng]);var wrap=document.getElementById('mapwrap');var W=wrap.clientWidth,H=wrap.clientHeight;var pw=250,ph=180;var left=pt.x+15;var top=pt.y-20;if(left+pw>W-10)left=pt.x-pw-15;if(top+ph>H-10)top=H-ph-10;if(top<5)top=5;if(left<5)left=5;pu.style.left=left+'px';pu.style.top=top+'px';}
 function closePopup(){document.getElementById('popup').style.display='none';}
 window.zoom=function(dir){if(map)map.setZoom(map.getZoom()+dir);};
 window.toggleWalk=function(){showWalk=!showWalk;document.getElementById('wbtn').textContent=showWalk?'① hide':'① show';drawWalkRings();};
@@ -1238,7 +1240,7 @@ window.focusPlace=function(id){
   var el=document.getElementById('pi-'+id);
   if(el)el.classList.add('on');
   var busanAirbnbs=['ba1','ba2','ba3'];
-  var jejuAirbnbs=['jf','jg','jh','ji','jk','jl','jm'];
+  var jejuAirbnbs=['jf','jg','jh','ji','jk','jl','jm','jn'];
   var cityTab=busanAirbnbs.indexOf(id)!==-1?'busan':jejuAirbnbs.indexOf(id)!==-1?'jeju':'seoul';
   document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
   var tabEl=document.getElementById('tab-'+cityTab);
