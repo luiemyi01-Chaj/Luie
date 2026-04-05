@@ -94,7 +94,7 @@ body{height:100%;height:100dvh;overflow:hidden;font-family:'DM Sans',sans-serif;
 .city-btn .city-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .city-btn .city-count{margin-left:auto;background:rgba(212,168,83,.25);color:var(--gold);font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;min-width:20px;text-align:center;}
 .city-btn.active .city-count{background:var(--gold);color:var(--ink);}
-.todo-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.todo-main{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
 .todo-header{background:var(--paper);border-bottom:2px solid #ddd5c8;padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;}
 .todo-header-title{display:flex;align-items:center;gap:10px;}
 .todo-header-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
@@ -137,7 +137,7 @@ body{height:100%;height:100dvh;overflow:hidden;font-family:'DM Sans',sans-serif;
 .todo-chip{padding:4px 10px;border-radius:20px;font-size:9px;font-weight:700;cursor:pointer;border:1.5px solid #ddd5c8;color:var(--muted);background:transparent;transition:all .12s;text-transform:uppercase;letter-spacing:.3px;}
 .todo-chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
 .todo-chip:hover:not(.on){background:rgba(0,0,0,.05);}
-.todo-list-wrap{flex:1;overflow-y:auto;padding:10px 18px 20px;}
+.todo-list-wrap{flex:1;min-height:0;overflow-y:auto;padding:10px 18px 20px;}
 .todo-list-wrap::-webkit-scrollbar{width:3px;}
 .todo-list-wrap::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px;}
 .todo-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:10px;color:var(--muted);}
@@ -174,12 +174,14 @@ body{height:100%;height:100dvh;overflow:hidden;font-family:'DM Sans',sans-serif;
 .todo-drag-dot{width:3px;height:3px;border-radius:50%;background:currentColor;}
 @media(max-width:600px){
   .todo-sidebar{display:none;}
-  #todo-view{flex-direction:column;}
+  #todo-view{flex-direction:column;height:calc(100dvh - 50px);overflow:hidden;}
+  .todo-main{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+  .todo-list-wrap{flex:1;min-height:0;overflow-y:auto;}
   .todo-city-mobile-bar{display:flex;background:var(--ink);padding:8px 10px;gap:5px;overflow-x:auto;flex-shrink:0;}
   .todo-city-mobile-btn{padding:6px 12px;border-radius:20px;font-size:10px;font-weight:700;cursor:pointer;border:1.5px solid rgba(212,168,83,.3);color:rgba(250,247,242,.55);background:transparent;white-space:nowrap;transition:all .15s;font-family:'DM Sans',sans-serif;}
   .todo-city-mobile-btn.active{background:var(--gold);color:var(--ink);border-color:var(--gold);}
   .todo-sort-group{margin-left:0;margin-top:4px;width:100%;}
-  .todo-date-badge{display:none;}
+  .todo-date-badge{display:inline-flex;}
 }
 @media(min-width:601px){.todo-city-mobile-bar{display:none;}}
 
@@ -987,8 +989,8 @@ window.goTravelers = function(btn){
 // ════════════════════════════════════════
 var TODO_CITIES=[
   {id:'seoul',label:'Seoul',emoji:'🏯',color:'#c0392b',sub:'Sep 26 – Oct 1 & Oct 8–11 · 8 nights'},
-  {id:'busan',label:'Busan',emoji:'🌊',color:'#1a5276',sub:'Oct 1–5 · 4 nights'},
-  {id:'jeju',label:'Jeju',emoji:'🌋',color:'#27ae60',sub:'Oct 5–8 · 3 nights'},
+  {id:'busan',label:'Busan',emoji:'🌊',color:'#1a5276',sub:'Oct 5–9 · 4 nights'},
+  {id:'jeju',label:'Jeju',emoji:'🌋',color:'#27ae60',sub:'Oct 1–5 · 4 nights'},
   {id:'daytrip',label:'Day Trips',emoji:'🚌',color:'#7d6608',sub:'Jinju · Gyeongju · Suwon'},
   {id:'general',label:'General',emoji:'📋',color:'#555e6e',sub:'Pre-trip & misc tasks'},
 ];
@@ -997,15 +999,51 @@ var currentTodoCity='seoul';
 var currentTodoFilter='all';
 var currentTodoSort='default';
 var STARTER_TASKS={
-  seoul:[{text:'Book Gyeongbokgung Palace tickets online',priority:'high'},{text:'Reserve Bukchon Hanok Village walking tour',priority:'med'},{text:'Look up Chuseok holiday hours for attractions',priority:'high'},{text:'Plan Han River picnic supplies',priority:'low'}],
-  busan:[{text:'Book Haeundae Beach accommodation backup',priority:'med'},{text:'Find Jagalchi Market opening hours',priority:'low'},{text:'Research Gamcheon Culture Village entry',priority:'low'}],
-  jeju:[{text:'Arrange private van for Hallasan hike day',priority:'high'},{text:'Book Seongsan Ilchulbong sunrise slot',priority:'high'},{text:'Check Manjanggul Lava Tube tour times',priority:'med'}],
-  daytrip:[{text:'Check Jinju Lantern Festival exact dates',priority:'high'},{text:'Book KTX/coach to Gyeongju',priority:'med'}],
-  general:[{text:'Get T-Money cards for everyone',priority:'high'},{text:'Download Naver Maps offline',priority:'high'},{text:'Check visa requirements for all travellers',priority:'high'},{text:'Set up group KakaoTalk chat',priority:'med'},{text:'Research travel insurance options',priority:'med'}]
+  seoul:[
+    {text:'Hepatitis A Shots for All – 1 Shot in April and 1 Shot in Sep',priority:'high',dueDate:'2026-04-10'},
+    {text:'Buy Travel eSim prior to. Airalo Global eSim — fast 4G/5G, coverage has been excellent in Seoul, Busan. $50 CAD 18 Days',priority:'high',dueDate:'2026-09-20'},
+    {text:"Mom's touch (best fried chicken burgers – fast food)",priority:'med'},
+    {text:'Daesung Golbaengi (K-fried chicken)',priority:'med'},
+    {text:'Nammaegukbap (itaewon) Restaurant',priority:'med'},
+    {text:'Book Gyeongbokgung Palace tickets online',priority:'high'},
+    {text:'Reserve Bukchon Hanok Village walking tour',priority:'med'},
+    {text:'Look up Chuseok holiday hours for attractions',priority:'high'},
+    {text:'Plan Han River picnic supplies',priority:'low'},
+  ],
+  busan:[
+    {text:'Book Haeundae Beach accommodation backup',priority:'med'},
+    {text:'Find Jagalchi Market opening hours',priority:'low'},
+    {text:'Research Gamcheon Culture Village entry',priority:'low'},
+    {text:'Book Gwangalli Beach sunset dinner spot',priority:'med'},
+    {text:'Check Haedong Yonggungsa Temple hours',priority:'low'},
+  ],
+  jeju:[
+    {text:'Arrange private van or rental cars for Hallasan hike day',priority:'high'},
+    {text:'Book Seongsan Ilchulbong sunrise entry slot',priority:'high'},
+    {text:'Check Manjanggul Lava Tube tour times',priority:'med'},
+    {text:'Research Hyeopjae Beach equipment rentals',priority:'low'},
+    {text:'Book group dinner – black pork BBQ (heukdwaeji)',priority:'med'},
+    {text:'Confirm Jeju accommodation booking',priority:'high'},
+    {text:'Look up Teddy Bear Museum / Bonte Museum options',priority:'low'},
+    {text:'Plan Hallasan trail route – Seongpanak vs Eorimok',priority:'high'},
+  ],
+  daytrip:[
+    {text:'Check Jinju Lantern Festival exact dates (week of Oct 9)',priority:'high'},
+    {text:'Book KTX or coach tickets to Gyeongju',priority:'med'},
+    {text:'Research Bulguksa Temple opening hours',priority:'low'},
+    {text:'Look into Suwon Hwaseong Fortress guided tour',priority:'low'},
+  ],
+  general:[
+    {text:'Get T-Money cards for everyone',priority:'high'},
+    {text:'Download Naver Maps offline',priority:'high'},
+    {text:'Check visa requirements for all travellers',priority:'high'},
+    {text:'Set up group KakaoTalk chat',priority:'med'},
+    {text:'Research travel insurance options',priority:'med'},
+  ]
 };
-function todoKey(){return 'korea2026_todos';}
+function todoKey(){return 'korea2026_todos_v2';}
 function saveTodos(){try{localStorage.setItem(todoKey(),JSON.stringify(todoData));}catch(e){}}
-function loadTodos(){try{var d=localStorage.getItem(todoKey());if(d)todoData=JSON.parse(d);}catch(e){}TODO_CITIES.forEach(function(c){if(!todoData[c.id]){todoData[c.id]=[];if(STARTER_TASKS[c.id]){STARTER_TASKS[c.id].forEach(function(t){todoData[c.id].push({id:Date.now()+Math.random(),text:t.text,done:false,priority:t.priority,created:Date.now()});});}}});saveTodos();}
+function loadTodos(){try{var d=localStorage.getItem(todoKey());if(d)todoData=JSON.parse(d);}catch(e){}TODO_CITIES.forEach(function(c){if(!todoData[c.id]){todoData[c.id]=[];if(STARTER_TASKS[c.id]){STARTER_TASKS[c.id].forEach(function(t){todoData[c.id].push({id:Date.now()+Math.random(),text:t.text,done:false,priority:t.priority,dueDate:t.dueDate||null,created:Date.now()});});}}});saveTodos();}
 function buildTodoSidebar(){var cl=document.getElementById('todo-city-list');var ml=document.getElementById('todo-mobile-cities');cl.innerHTML='';ml.innerHTML='';TODO_CITIES.forEach(function(c){var tasks=todoData[c.id]||[];var left=tasks.filter(function(t){return!t.done;}).length;var btn=document.createElement('button');btn.className='city-btn'+(c.id===currentTodoCity?' active':'');btn.innerHTML='<div class="city-dot" style="background:'+c.color+'"></div><span>'+c.emoji+' '+c.label+'</span><span class="city-count">'+left+'</span>';btn.onclick=(function(id){return function(){switchTodoCity(id);};})(c.id);cl.appendChild(btn);var mbtn=document.createElement('button');mbtn.className='todo-city-mobile-btn'+(c.id===currentTodoCity?' active':'');mbtn.textContent=c.emoji+' '+c.label;mbtn.onclick=(function(id){return function(){switchTodoCity(id);};})(c.id);ml.appendChild(mbtn);});}
 function switchTodoCity(id){currentTodoCity=id;currentTodoFilter='all';document.querySelectorAll('.todo-chip').forEach(function(c){c.classList.remove('on');});var chips=document.querySelectorAll('.todo-chip');if(chips[0])chips[0].classList.add('on');buildTodoSidebar();renderTodoHeader();renderTodoList();}
 function renderTodoHeader(){var c=TODO_CITIES.filter(function(x){return x.id===currentTodoCity;})[0];if(!c)return;document.getElementById('todo-hdr-dot').style.background=c.color;document.getElementById('todo-hdr-name').textContent=c.emoji+' '+c.label;document.getElementById('todo-hdr-sub').textContent=c.sub;var tasks=todoData[currentTodoCity]||[];var done=tasks.filter(function(t){return t.done;}).length;var total=tasks.length;var pct=total>0?Math.round(done/total*100):0;document.getElementById('todo-progress-fill').style.width=pct+'%';document.getElementById('todo-progress-fill').style.background=c.color;document.getElementById('todo-progress-label').textContent=done+' / '+total;document.getElementById('stat-total').textContent=total;document.getElementById('stat-done').textContent=done;document.getElementById('stat-left').textContent=total-done;}
