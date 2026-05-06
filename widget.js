@@ -1,29 +1,46 @@
 /**
- * Korea Trip 2026 — AI Assistant Widget
+ * Korea Trip 2026 — AI Agent Widget (with Navigation)
  * -------------------------------------------------------
  * Drop widget.js in your GitHub repo root.
  * Add this line before </body> in index.html:
  *   <script src="widget.js"></script>
- *
- * SETUP: Enter your Anthropic API key below.
- * Keep your repo PRIVATE if you hardcode the key here.
  * -------------------------------------------------------
  */
 
 (function () {
 
   // ─────────────────────────────────────────────
-  //  CONFIG — paste your Anthropic API key here
+  //  CONFIG
   // ─────────────────────────────────────────────
   const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';
 
   // ─────────────────────────────────────────────
-  //  TRIP KNOWLEDGE BASE (system prompt context)
+  //  SYSTEM PROMPT — returns JSON with navigation
   // ─────────────────────────────────────────────
-  const SYSTEM_PROMPT = `You are a helpful travel assistant for the Korea Trip 2026 group.
-You know everything about this trip and answer questions clearly and concisely.
-Keep answers friendly, scannable and brief. Use bullet points or short paragraphs.
+  const SYSTEM_PROMPT = `You are a helpful AI agent for the Korea Trip 2026 group.
+Answer questions clearly and concisely. Use bullet points or short paragraphs.
 Never make up information — if something isn't in the data below, say so.
+
+CRITICAL: You MUST respond with ONLY a valid JSON object in this exact format:
+{
+  "answer": "your answer here",
+  "navigate_to": "target_id"
+}
+
+For navigate_to, choose the single most relevant target from this list:
+- "airbnb-seoul"     → Seoul Airbnb options
+- "airbnb-busan"     → Busan Airbnb options
+- "airbnb-jeju"      → Jeju accommodation options
+- "airbnb-all"       → General Airbnb / accommodation question
+- "travelers"        → Traveler schedule, who is going, group info
+- "budget"           → Budget, costs, pricing breakdown
+- "itinerary"        → Trip itinerary, timeline, dates
+- "transit-airport"  → Incheon airport to Seoul transport
+- "transit-subway"   → Seoul subway lines
+- "day-trips"        → Day trips from cities
+- "transport-guide"  → Getting around Seoul, Busan, Jeju
+- "todo"             → To do lists, tasks
+- "none"             → General question with no specific page location
 
 === TRIP OVERVIEW ===
 Destination: South Korea — Seoul, Jeju, Busan
@@ -49,12 +66,10 @@ SEOUL (Stay 1: Sep 25–Oct 1 | Stay 2: Oct 9–11):
 JEJU (Oct 1–5):
 • Option H — The Suites Jeju, Jungmun Beach (Seogwipo) — luxury hotel, pool & spa
 • Option I — Parnas Hotel Jeju, Jungmun, 5-star, ocean view, +82-64-801-5555
-• Option J — Airbnb Villa, sleeps 12, Jeju Island — view listing for pricing
-• Option N — Jeju Hanok Hotel Hallagung, Seogwipo, traditional Hanok, ~$185 CAD/night (Hotels.com)
-• Option O — Jeju GoldOne Hotel & Suites, 5-star, Seogwipo, 1032 Ieodo-ro, ocean view, award winner
-• Option K — Two Jeju Airbnb units (6 guests each, book both)
-• Option L — Two Jeju Airbnb units (6 guests each, book both)
-• Option M — Two Jeju Airbnb units (6 guests each, book both)
+• Option J — Airbnb Villa, sleeps 12, Jeju Island
+• Option N — Jeju Hanok Hotel Hallagung, Seogwipo, traditional Hanok, ~$185 CAD/night
+• Option O — Jeju GoldOne Hotel & Suites, 5-star, Seogwipo, ocean view, award winner
+• Option K, L, M — Two Jeju Airbnb units each (6 guests per unit, book both)
 
 BUSAN (Oct 5–9):
 • Option D — Roots House Busan Station, Choryang Ibagu-Gil Alley — $2,241 CAD total
@@ -62,62 +77,231 @@ BUSAN (Oct 5–9):
 • Option F — The Hue Haeundae, Haeundae Beach (3 min walk), up to 15 guests, rooftop BBQ
 • Option G — Gwangalli Beach (×2 units), Diamond Bridge view, Units 501 & 502, 12 guests
 
-=== BUDGET BREAKDOWN (per person, CAD) ===
-Total estimate excl. flights: $2,850 (~$168/day)
-Total estimate incl. flights: $4,350–$4,750
-
-Lodging:          $1,190  ($70/night pp)
-Food:             $765    ($45/day pp)
-Local Transit:    $255    ($15/day pp)
-Inter-city Travel:$210    (KTX + flights pp)
-Activities:       $255    ($15/day pp)
-ICN Transfer:     $175    (AREX x2 pp)
+=== BUDGET (per person, CAD) ===
+Total excl. flights: $2,850 (~$168/day)
+Total incl. flights: $4,350–$4,750
+Lodging: $1,190 | Food: $765 | Local Transit: $255
+Inter-city: $210 | Activities: $255 | ICN Transfer: $175
 Group total (12 pax): $52k–$57k incl. flights
-
 Exchange: 1 CAD ≈ ₩1,070 | 1 USD ≈ ₩1,460
 
 === AIRPORT TRANSPORT (Incheon → Seoul) ===
-• AREX Express Train: ₩9,500 | 43 min (T1) / 51 min (T2) | every 20–40 min | 5:23am–10:48pm | best for speed
-• AREX All-Stop Train: ₩4,150–4,750 | 59–66 min | every 5–10 min | stops Hongik Univ, Gongdeok, DMC | best value
+• AREX Express: ₩9,500 | 43 min (T1) | every 20–40 min | best for speed
+• AREX All-Stop: ₩4,150–4,750 | 59–66 min | every 5–10 min | best value
 • Airport Limousine Bus: ₩9,000–18,000 | 60–80 min | Route 6701 (Myeongdong), 6703 (Gangnam)
-• Taxi: ₩55,000–75,000 | 60–90 min | +₩7,900 toll | +20% surcharge 10pm–4am | 24/7
-Quick compare for ~10 people: AREX Express ₩95,000 | Limo Bus ₩180,000 | 2× Taxis ~₩130,000
+• Taxi: ₩55,000–75,000 | 60–90 min | +₩7,900 toll | +20% surcharge 10pm–4am
 
 === SEOUL SUBWAY ===
-Line 1 (Dark Blue): Incheon ↔ Soyosan, Seoul Stn, Dongdaemun
+Line 1 (Dark Blue): Seoul Stn, Dongdaemun
 Line 2 (Green, Circular): City Hall, Hongdae, Gangnam, Jamsil
-Line 3 (Orange ⭐ Airbnb area): Anguk, Gyeongbokgung, Chungmuro
-Line 4 (Sky Blue): Myeongdong, Seoul Stn, Hyehwa
-Line 5 (Purple): Gwanghwamun, Yeouido, Gongdeok
-Line 6 (Brown): Itaewon, Mapo, Bulgwang, Sindang
-Line 7 (Olive): Boramae, Gangnam-gu Office
-Line 9 (Pink/Express): Yeouido, Express Bus Terminal, COEX
+Line 3 (Orange): Anguk, Gyeongbokgung — near Airbnbs
+Line 4 (Sky Blue): Myeongdong, Seoul Stn
+Line 5 (Purple): Gwanghwamun, Yeouido
+Line 6 (Brown): Itaewon, Mapo
+Line 9 (Pink/Express): Yeouido, COEX
 
-=== KEY TOURIST AREAS ===
-Seoul:
-• Myeongdong / Seoul Tower → Line 4, Myeongdong Stn
-• Gyeongbokgung / Bukchon → Line 3, Anguk Stn
-• Hongdae / Mangwon → AREX or Line 2
-• Gangnam / COEX → Line 2 or Line 9
-• Lotte World / Jamsil → Line 2 or Line 8
-
-Busan:
-• Seomyeon → central metro hub, ideal group base
-• Haeundae / Gwangalli → Metro Line 2
-• Songdo Cable Car → taxi recommended
-• The Hue Haeundae (Option F) → Haeundae Stn Line 2, 3 min to beach
-
-Jeju: Private van or two rental vehicles strongly recommended
-
-=== GETTING AROUND BY CITY ===
-Seoul: Public transit most efficient (unless late night)
+=== GETTING AROUND ===
+Seoul: Public transit most efficient
 Busan: Mix metro + taxis for coastal spots
 Jeju: Private van strongly recommended
 
 === TRAVELERS ===
-12 total: 9 from Canada, 3 from US (Victoria, Julie, Mike)
-Canada group: Sep 24 departure, 18 days total
+12 total: 9 Canada, 3 US (Victoria, Julie, Mike)
+Canada group: Sep 24 departure, 18 days
 US group: Sep 27 departure, 10 days, return Oct 8`;
+
+  // ─────────────────────────────────────────────
+  //  NAVIGATION MAP
+  //  Maps target_id → actions to take on the page
+  // ─────────────────────────────────────────────
+  const NAV_MAP = {
+    'airbnb-seoul': {
+      label: '🏠 Seoul Airbnbs',
+      actions: [
+        { type: 'click-text', texts: ['Seoul', 'SEOUL'] },
+        { type: 'click-text', texts: ['Airbnb', 'AIRBNB'] },
+        { type: 'scroll-to-text', texts: ['Airbnb Options', 'AIRBNB OPTIONS', '🏠 Airbnb'] },
+        { type: 'scroll-to-text', texts: ['Option A', 'Myeongdong Stn'] },
+      ]
+    },
+    'airbnb-busan': {
+      label: '🏠 Busan Airbnbs',
+      actions: [
+        { type: 'click-text', texts: ['Busan', 'BUSAN'] },
+        { type: 'click-text', texts: ['Airbnb', 'AIRBNB'] },
+        { type: 'scroll-to-text', texts: ['Airbnb Options', 'AIRBNB OPTIONS', '🏠 Airbnb'] },
+        { type: 'scroll-to-text', texts: ['Option D', 'Roots House', 'Busan'] },
+      ]
+    },
+    'airbnb-jeju': {
+      label: '🏠 Jeju Accommodation',
+      actions: [
+        { type: 'click-text', texts: ['Jeju', 'JEJU'] },
+        { type: 'click-text', texts: ['Airbnb', 'AIRBNB'] },
+        { type: 'scroll-to-text', texts: ['Airbnb Options', 'AIRBNB OPTIONS', '🏠 Airbnb'] },
+        { type: 'scroll-to-text', texts: ['Option H', 'Suites Jeju', 'Jeju'] },
+      ]
+    },
+    'airbnb-all': {
+      label: '🏠 Airbnb Options',
+      actions: [
+        { type: 'click-text', texts: ['Airbnb', 'AIRBNB'] },
+        { type: 'scroll-to-text', texts: ['Airbnb Options', 'AIRBNB OPTIONS', '🏠 Airbnb'] },
+      ]
+    },
+    'travelers': {
+      label: '👥 Travelers',
+      actions: [
+        { type: 'click-text', texts: ['Travelers', 'TRAVELERS', '👥 Travelers'] },
+        { type: 'scroll-to-text', texts: ['Traveler Schedule', 'Traveler', '👥'] },
+      ]
+    },
+    'budget': {
+      label: '💰 Budget',
+      actions: [
+        { type: 'scroll-to-text', texts: ['Trip Budget', 'TRIP BUDGET', 'Budget', '💰'] },
+      ]
+    },
+    'itinerary': {
+      label: '📅 Itinerary',
+      actions: [
+        { type: 'scroll-to-text', texts: ['Trip Itinerary', 'TRIP ITINERARY', 'Itinerary', '📅'] },
+      ]
+    },
+    'transit-airport': {
+      label: '✈️ Airport Transport',
+      actions: [
+        { type: 'click-text', texts: ['Day Trips', 'DAY TRIPS'] },
+        { type: 'scroll-to-text', texts: ['Incheon Airport', 'AREX', 'Airport →', 'Airport Limousine'] },
+      ]
+    },
+    'transit-subway': {
+      label: '🚇 Subway Lines',
+      actions: [
+        { type: 'click-text', texts: ['Seoul', 'SEOUL'] },
+        { type: 'scroll-to-text', texts: ['Subway Lines', 'SUBWAY', 'Line 1', 'Line 2'] },
+      ]
+    },
+    'day-trips': {
+      label: '🚌 Day Trips',
+      actions: [
+        { type: 'click-text', texts: ['Day Trips', 'DAY TRIPS'] },
+        { type: 'scroll-to-text', texts: ['Day Trips', 'DAY TRIPS', '🚌'] },
+      ]
+    },
+    'transport-guide': {
+      label: '🚌 Transport Guide',
+      actions: [
+        { type: 'scroll-to-text', texts: ['Group Transport', 'Transport Guide', 'Getting around', 'Best option'] },
+      ]
+    },
+    'todo': {
+      label: '✅ To Do',
+      actions: [
+        { type: 'click-text', texts: ['To Do', 'TO DO', '✅ To Do'] },
+        { type: 'scroll-to-text', texts: ['To Do', 'Tasks', 'Todo'] },
+      ]
+    },
+  };
+
+  // ─────────────────────────────────────────────
+  //  NAVIGATOR
+  // ─────────────────────────────────────────────
+  function findElementByText(texts, tag = '*') {
+    for (const text of texts) {
+      const all = document.querySelectorAll(tag === '*'
+        ? 'button, a, h1, h2, h3, h4, [role="tab"], nav *, header *, .tab, .filter, .btn, .nav-item, li'
+        : tag);
+      for (const el of all) {
+        if (el.textContent.trim().includes(text) && isVisible(el)) {
+          return el;
+        }
+      }
+      // Broader search
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        if (node.children.length === 0 && node.textContent.trim().includes(text) && isVisible(node)) {
+          return node;
+        }
+      }
+    }
+    return null;
+  }
+
+  function isVisible(el) {
+    const style = window.getComputedStyle(el);
+    return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+  }
+
+  function scrollToElement(el) {
+    const rect = el.getBoundingClientRect();
+    const offset = rect.top + window.scrollY - 80;
+    window.scrollTo({ top: offset, behavior: 'smooth' });
+    pulseElement(el);
+  }
+
+  function pulseElement(el) {
+    // Remove any existing pulse
+    document.querySelectorAll('.kt-pulse').forEach(e => {
+      e.style.outline = '';
+      e.style.boxShadow = '';
+      e.classList.remove('kt-pulse');
+    });
+
+    el.classList.add('kt-pulse');
+    const original = {
+      outline: el.style.outline,
+      boxShadow: el.style.boxShadow,
+      transition: el.style.transition,
+    };
+
+    el.style.transition = 'outline 0.2s, box-shadow 0.2s';
+    el.style.outline = '3px solid #C0392B';
+    el.style.boxShadow = '0 0 0 6px rgba(192,57,43,0.2)';
+
+    setTimeout(() => {
+      el.style.outline = original.outline;
+      el.style.boxShadow = original.boxShadow;
+      el.style.transition = original.transition;
+      el.classList.remove('kt-pulse');
+    }, 2500);
+  }
+
+  async function navigate(targetId) {
+    if (!targetId || targetId === 'none') return;
+    const nav = NAV_MAP[targetId];
+    if (!nav) return;
+
+    // Small delay to let the answer render first
+    await delay(600);
+
+    let scrollTarget = null;
+
+    for (const action of nav.actions) {
+      if (action.type === 'click-text') {
+        const el = findElementByText(action.texts);
+        if (el) {
+          try { el.click(); } catch(e) {}
+          await delay(400);
+        }
+      } else if (action.type === 'scroll-to-text') {
+        const el = findElementByText(action.texts);
+        if (el) {
+          scrollTarget = el;
+          break;
+        }
+      }
+    }
+
+    if (scrollTarget) {
+      scrollToElement(scrollTarget);
+    }
+  }
+
+  function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
   // ─────────────────────────────────────────────
   //  STYLES
@@ -143,11 +327,10 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
     }
     #kt-widget-btn:hover {
       transform: scale(1.08);
-      box-shadow: 0 6px 28px rgba(192,57,43,0.55), 0 3px 12px rgba(0,0,0,0.25);
+      box-shadow: 0 6px 28px rgba(192,57,43,0.55);
     }
     #kt-widget-btn.open {
       background: linear-gradient(135deg, #555 0%, #333 100%);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     }
     #kt-panel {
       position: fixed;
@@ -155,7 +338,7 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
       right: 28px;
       width: 370px;
       max-width: calc(100vw - 40px);
-      height: 520px;
+      height: 540px;
       max-height: calc(100vh - 130px);
       background: #fff;
       border-radius: 18px;
@@ -184,20 +367,8 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
       gap: 10px;
       flex-shrink: 0;
     }
-    #kt-header-icon {
-      font-size: 22px;
-    }
-    #kt-header-text h3 {
-      margin: 0;
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 0.01em;
-    }
-    #kt-header-text p {
-      margin: 2px 0 0;
-      font-size: 11.5px;
-      opacity: 0.82;
-    }
+    #kt-header-text h3 { margin: 0; font-size: 15px; font-weight: 700; }
+    #kt-header-text p  { margin: 2px 0 0; font-size: 11.5px; opacity: 0.82; }
     #kt-messages {
       flex: 1;
       overflow-y: auto;
@@ -208,14 +379,8 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
       background: #f7f7f8;
     }
     #kt-messages::-webkit-scrollbar { width: 4px; }
-    #kt-messages::-webkit-scrollbar-track { background: transparent; }
     #kt-messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
-    .kt-msg {
-      display: flex;
-      flex-direction: column;
-      max-width: 88%;
-      gap: 3px;
-    }
+    .kt-msg { display: flex; flex-direction: column; max-width: 88%; gap: 3px; }
     .kt-msg.user { align-self: flex-end; align-items: flex-end; }
     .kt-msg.ai   { align-self: flex-start; align-items: flex-start; }
     .kt-bubble {
@@ -241,6 +406,23 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
     .kt-bubble strong { color: #8B1A1A; }
     .kt-bubble p { margin: 0 0 6px; }
     .kt-bubble p:last-child { margin-bottom: 0; }
+    .kt-nav-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #fdecea;
+      border: 1.5px solid #C0392B;
+      color: #922B21;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-top: 5px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .kt-nav-pill:hover { background: #fbd5d2; }
     .kt-typing {
       display: flex;
       align-items: center;
@@ -281,7 +463,7 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
       padding: 5px 11px;
       border-radius: 20px;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.15s;
       white-space: nowrap;
       font-family: inherit;
     }
@@ -360,27 +542,20 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
       cursor: pointer;
       font-family: inherit;
     }
-    #kt-key-save:hover { opacity: 0.9; }
     #kt-key-err { color: #C0392B; font-size: 12px; margin-top: 8px; }
   `;
 
-  // ─────────────────────────────────────────────
-  //  SAMPLE SUGGESTIONS
-  // ─────────────────────────────────────────────
   const SUGGESTIONS = [
     'Seoul Airbnb options',
-    'Busan Airbnb options',
-    'Jeju accommodation',
+    'Busan accommodation',
+    'Jeju hotels',
     'Airport to Seoul',
     'Budget breakdown',
     'Who are the travelers?',
     'Itinerary overview',
-    'Getting around Jeju',
+    'Seoul subway lines',
   ];
 
-  // ─────────────────────────────────────────────
-  //  INIT
-  // ─────────────────────────────────────────────
   let messages = [];
   let isLoading = false;
 
@@ -398,21 +573,19 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
   }
 
   function buildHTML() {
-    // Button
     const btn = document.createElement('button');
     btn.id = 'kt-widget-btn';
     btn.title = 'Korea Trip Assistant';
     btn.innerHTML = '🇰🇷';
 
-    // Panel
     const panel = document.createElement('div');
     panel.id = 'kt-panel';
     panel.innerHTML = `
       <div id="kt-header">
-        <div id="kt-header-icon">🗺️</div>
+        <div style="font-size:22px">🗺️</div>
         <div id="kt-header-text">
-          <h3>Korea Trip Assistant</h3>
-          <p>Ask anything about the trip</p>
+          <h3>Korea Trip Agent</h3>
+          <p>Ask anything — I'll navigate there for you</p>
         </div>
       </div>
       <div id="kt-messages"></div>
@@ -420,36 +593,52 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
         ${SUGGESTIONS.map(s => `<button class="kt-chip">${s}</button>`).join('')}
       </div>
       <div id="kt-input-row">
-        <input id="kt-input" type="text" placeholder="Ask about Airbnbs, transit, budget…" autocomplete="off"/>
+        <input id="kt-input" type="text" placeholder="Ask anything about the trip…" autocomplete="off"/>
         <button id="kt-send" title="Send">
           <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>
     `;
 
-    // Key setup overlay (shown if no key configured)
-    const keySetup = document.createElement('div');
-    keySetup.id = 'kt-key-setup';
-    keySetup.innerHTML = `
-      <div style="font-size:36px;margin-bottom:12px">🔑</div>
-      <h4>API Key Required</h4>
-      <p>Enter your Anthropic API key to activate the assistant. It's stored only for this session.</p>
-      <input id="kt-key-input" type="password" placeholder="sk-ant-…" spellcheck="false"/>
-      <button id="kt-key-save">Activate Assistant</button>
-      <div id="kt-key-err"></div>
-    `;
-
     document.body.appendChild(btn);
     document.body.appendChild(panel);
 
     if (!getApiKey()) {
+      const keySetup = document.createElement('div');
+      keySetup.id = 'kt-key-setup';
+      keySetup.innerHTML = `
+        <div style="font-size:36px;margin-bottom:12px">🔑</div>
+        <h4>API Key Required</h4>
+        <p>Enter your Anthropic API key to activate the assistant. Stored for this session only.</p>
+        <input id="kt-key-input" type="password" placeholder="sk-ant-…" spellcheck="false"/>
+        <button id="kt-key-save">Activate Assistant</button>
+        <div id="kt-key-err"></div>
+      `;
       panel.appendChild(keySetup);
     }
 
-    return { btn, panel, keySetup };
+    return { btn, panel };
   }
 
-  function addMessage(role, content) {
+  function renderMarkdown(text) {
+    return text
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,'<em>$1</em>')
+      .split('\n')
+      .map(line => {
+        if (/^[•\-\*]\s/.test(line)) return `<li>${line.replace(/^[•\-\*]\s/,'')}</li>`;
+        if (/^\d+\.\s/.test(line)) return `<li>${line.replace(/^\d+\.\s/,'')}</li>`;
+        return line;
+      })
+      .join('\n')
+      .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
+      .split('\n')
+      .map(line => line.startsWith('<') ? line : (line.trim() ? `<p>${line}</p>` : ''))
+      .join('');
+  }
+
+  function addMessage(role, content, navTarget) {
     const container = document.getElementById('kt-messages');
     const div = document.createElement('div');
     div.className = `kt-msg ${role}`;
@@ -458,31 +647,22 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
     bubble.className = 'kt-bubble';
 
     if (role === 'ai') {
-      // Basic markdown: bold, bullets, line breaks
-      let html = content
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .split('\n')
-        .map(line => {
-          if (/^[•\-\*]\s/.test(line)) return `<li>${line.replace(/^[•\-\*]\s/, '')}</li>`;
-          if (/^\d+\.\s/.test(line)) return `<li>${line.replace(/^\d+\.\s/, '')}</li>`;
-          return line;
-        })
-        .join('\n')
-        .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
-        .split('\n')
-        .map(line => line.startsWith('<') ? line : (line.trim() ? `<p>${line}</p>` : ''))
-        .join('');
-
-      bubble.innerHTML = html || content;
+      bubble.innerHTML = renderMarkdown(content) || content;
     } else {
       bubble.textContent = content;
     }
 
     div.appendChild(bubble);
+
+    // Add navigation pill if there's a target
+    if (role === 'ai' && navTarget && navTarget !== 'none' && NAV_MAP[navTarget]) {
+      const pill = document.createElement('button');
+      pill.className = 'kt-nav-pill';
+      pill.innerHTML = `↗ Navigate to ${NAV_MAP[navTarget].label}`;
+      pill.addEventListener('click', () => navigate(navTarget));
+      div.appendChild(pill);
+    }
+
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
 
@@ -519,12 +699,14 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
     if (input) { input.value = ''; input.disabled = true; }
     if (sendBtn) sendBtn.disabled = true;
 
-    // Hide suggestions after first send
     const sugg = document.getElementById('kt-suggestions');
     if (sugg) sugg.style.display = 'none';
 
     addMessage('user', text);
     showTyping();
+
+    let answerText = '';
+    let navTarget = 'none';
 
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -537,7 +719,7 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 600,
+          max_tokens: 700,
           system: SYSTEM_PROMPT,
           messages: messages.filter(m => m.role === 'user' || m.role === 'assistant'),
         }),
@@ -549,8 +731,25 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
       if (data.error) {
         addMessage('ai', `⚠️ Error: ${data.error.message}`);
       } else {
-        const reply = data.content?.[0]?.text || 'Sorry, I couldn\'t get a response.';
-        addMessage('ai', reply);
+        const raw = data.content?.[0]?.text || '';
+        try {
+          // Parse JSON response
+          const clean = raw.replace(/```json|```/g, '').trim();
+          const parsed = JSON.parse(clean);
+          answerText = parsed.answer || raw;
+          navTarget = parsed.navigate_to || 'none';
+        } catch (e) {
+          // Fallback if Claude doesn't return clean JSON
+          answerText = raw;
+          navTarget = 'none';
+        }
+
+        addMessage('ai', answerText, navTarget);
+
+        // Auto-navigate
+        if (navTarget && navTarget !== 'none') {
+          navigate(navTarget);
+        }
       }
     } catch (err) {
       hideTyping();
@@ -568,7 +767,7 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
       if (!container) return;
       const div = document.createElement('div');
       div.className = 'kt-msg ai';
-      div.innerHTML = `<div class="kt-bubble">👋 Hi! I'm your Korea Trip 2026 assistant. Ask me about <strong>Airbnbs</strong>, <strong>the itinerary</strong>, <strong>budget</strong>, <strong>transit</strong>, or anything else about the trip.</div>`;
+      div.innerHTML = `<div class="kt-bubble">👋 Hi! I'm your Korea Trip agent. Ask me anything and I'll <strong>answer + navigate</strong> to the right spot on the page automatically.</div>`;
       container.appendChild(div);
     }, 350);
   }
@@ -588,7 +787,6 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
       }
     });
 
-    // Key save
     document.addEventListener('click', e => {
       if (e.target.id === 'kt-key-save') {
         const keyInput = document.getElementById('kt-key-input');
@@ -605,7 +803,6 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
       }
     });
 
-    // Send button
     const sendBtn = document.getElementById('kt-send');
     const input = document.getElementById('kt-input');
     if (sendBtn) sendBtn.addEventListener('click', () => sendMessage(input.value));
@@ -615,14 +812,12 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
       });
     }
 
-    // Suggestion chips
     document.addEventListener('click', e => {
       if (e.target.classList.contains('kt-chip')) {
         sendMessage(e.target.textContent);
       }
     });
 
-    // Close on outside click
     document.addEventListener('click', e => {
       if (open && !panel.contains(e.target) && e.target !== btn) {
         open = false;
