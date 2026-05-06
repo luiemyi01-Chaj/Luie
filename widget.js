@@ -536,7 +536,7 @@ US group: Sep 27 departure, 10 days, return Oct 8`;
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 600,
           system: SYSTEM_PROMPT,
           messages: messages.filter(m => m.role === 'user' || m.role === 'assistant'),
