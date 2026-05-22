@@ -8,6 +8,53 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script type="module">
+  // ── FIREBASE CONFIG ── paste your firebaseConfig values here ──
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+  apiKey:            "AIzaSy...",
+  authDomain:        "korea-trip-2026.firebaseapp.com",
+  projectId:         "korea-trip-2026",
+  storageBucket:     "korea-trip-2026.appspot.com",
+  messagingSenderId: "123456789",
+  appId:             "1:123456789:web:abc..."
+};
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+  const TODOS_DOC = doc(db, 'todos', 'korea2026');
+
+  // Expose save/load to non-module scope
+  window._fbSaveTodos = async function(data) {
+    try { await setDoc(TODOS_DOC, { data: JSON.stringify(data) }); } catch(e) { console.warn('Firestore save failed:', e); }
+  };
+
+  window._fbLoadTodos = async function() {
+    try {
+      const snap = await getDoc(TODOS_DOC);
+      return snap.exists() ? JSON.parse(snap.data().data) : null;
+    } catch(e) { console.warn('Firestore load failed:', e); return null; }
+  };
+
+  // Real-time listener: update UI when another device saves
+  onSnapshot(TODOS_DOC, function(snap) {
+    if (!snap.exists()) return;
+    try {
+      var fresh = JSON.parse(snap.data().data);
+      // Only apply if it differs from what we have (avoids re-render on our own saves)
+      if (JSON.stringify(fresh) !== JSON.stringify(window._todoData)) {
+        window._todoData = fresh;
+        if (window._todoOnRemoteUpdate) window._todoOnRemoteUpdate(fresh);
+      }
+    } catch(e) {}
+  });
+
+  // Signal that Firebase is ready
+  window._fbReady = true;
+  if (window._fbOnReady) window._fbOnReady();
+</script>
 <style>
 :root{--ink:#1a1a2e;--paper:#faf7f2;--gold:#d4a853;--muted:#7a7060;--cream:#f0ebe2}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -1002,9 +1049,59 @@ var STARTER_TASKS={
   daytrip:[{text:'Check Jinju Lantern Festival exact dates',priority:'high'},{text:'Book KTX/coach to Gyeongju',priority:'med'}],
   general:[{text:'Get T-Money cards for everyone',priority:'high'},{text:'Download Naver Maps offline',priority:'high'},{text:'Check visa requirements for all travellers',priority:'high'},{text:'Set up group KakaoTalk chat',priority:'med'},{text:'Research travel insurance options',priority:'med'}]
 };
-function todoKey(){return 'korea2026_todos';}
-function saveTodos(){try{localStorage.setItem(todoKey(),JSON.stringify(todoData));}catch(e){}}
-function loadTodos(){try{var d=localStorage.getItem(todoKey());if(d)todoData=JSON.parse(d);}catch(e){}TODO_CITIES.forEach(function(c){if(!todoData[c.id]){todoData[c.id]=[];if(STARTER_TASKS[c.id]){STARTER_TASKS[c.id].forEach(function(t){todoData[c.id].push({id:String(Date.now())+'-'+String(Math.floor(Math.random()*1000000)),text:t.text,done:false,priority:t.priority,created:Date.now()});});}}});saveTodos();}
+// ── Firebase-backed To Do storage ──────────────────────────────────────────
+// saveTodos: persists to Firestore (all devices) + localStorage (offline fallback)
+function saveTodos(){
+  try{localStorage.setItem('korea2026_todos_bak',JSON.stringify(todoData));}catch(e){}
+  if(window._fbSaveTodos){window._fbSaveTodos(todoData);}
+  window._todoData=todoData;
+}
+
+// Seed missing cities from STARTER_TASKS (runs after load)
+function _seedMissingCities(){
+  TODO_CITIES.forEach(function(c){
+    if(!todoData[c.id]){
+      todoData[c.id]=[];
+      if(STARTER_TASKS[c.id]){
+        STARTER_TASKS[c.id].forEach(function(t){
+          todoData[c.id].push({id:String(Date.now())+'-'+String(Math.floor(Math.random()*1000000)),text:t.text,done:false,priority:t.priority,created:Date.now()});
+        });
+      }
+    }
+  });
+}
+
+function loadTodos(){
+  function applyData(d){
+    if(d){todoData=d;}
+    _seedMissingCities();
+    window._todoData=todoData;
+    saveTodos();
+    buildTodoSidebar();renderTodoHeader();renderTodoList();
+  }
+
+  // Show something immediately from localStorage while Firestore loads
+  try{var bak=localStorage.getItem('korea2026_todos_bak');if(bak){todoData=JSON.parse(bak);}}catch(e){}
+  _seedMissingCities();
+  buildTodoSidebar();renderTodoHeader();renderTodoList();
+
+  function fetchFromFirestore(){
+    if(window._fbLoadTodos){
+      window._fbLoadTodos().then(function(d){applyData(d||todoData);});
+    }
+  }
+
+  if(window._fbReady){fetchFromFirestore();}
+  else{window._fbOnReady=fetchFromFirestore;}
+}
+
+// Real-time remote update handler (another device saved)
+window._todoOnRemoteUpdate=function(fresh){
+  todoData=fresh;
+  window._todoData=fresh;
+  try{localStorage.setItem('korea2026_todos_bak',JSON.stringify(fresh));}catch(e){}
+  buildTodoSidebar();renderTodoHeader();renderTodoList();
+};
 function buildTodoSidebar(){var cl=document.getElementById('todo-city-list');var ml=document.getElementById('todo-mobile-cities');cl.innerHTML='';ml.innerHTML='';TODO_CITIES.forEach(function(c){var tasks=todoData[c.id]||[];var left=tasks.filter(function(t){return!t.done;}).length;var btn=document.createElement('button');btn.className='city-btn'+(c.id===currentTodoCity?' active':'');btn.innerHTML='<div class="city-dot" style="background:'+c.color+'"></div><span>'+c.emoji+' '+c.label+'</span><span class="city-count">'+left+'</span>';btn.onclick=(function(id){return function(){switchTodoCity(id);};})(c.id);cl.appendChild(btn);var mbtn=document.createElement('button');mbtn.className='todo-city-mobile-btn'+(c.id===currentTodoCity?' active':'');mbtn.textContent=c.emoji+' '+c.label;mbtn.onclick=(function(id){return function(){switchTodoCity(id);};})(c.id);ml.appendChild(mbtn);});}
 function switchTodoCity(id){currentTodoCity=id;currentTodoFilter='all';document.querySelectorAll('.todo-chip').forEach(function(c){c.classList.remove('on');});var chips=document.querySelectorAll('.todo-chip');if(chips[0])chips[0].classList.add('on');buildTodoSidebar();renderTodoHeader();renderTodoList();}
 function renderTodoHeader(){var c=TODO_CITIES.filter(function(x){return x.id===currentTodoCity;})[0];if(!c)return;document.getElementById('todo-hdr-dot').style.background=c.color;document.getElementById('todo-hdr-name').textContent=c.emoji+' '+c.label;document.getElementById('todo-hdr-sub').textContent=c.sub;var tasks=todoData[currentTodoCity]||[];var done=tasks.filter(function(t){return t.done;}).length;var total=tasks.length;var pct=total>0?Math.round(done/total*100):0;document.getElementById('todo-progress-fill').style.width=pct+'%';document.getElementById('todo-progress-fill').style.background=c.color;document.getElementById('todo-progress-label').textContent=done+' / '+total;document.getElementById('stat-total').textContent=total;document.getElementById('stat-done').textContent=done;document.getElementById('stat-left').textContent=total-done;}
