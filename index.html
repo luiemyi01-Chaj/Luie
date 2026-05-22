@@ -1004,7 +1004,7 @@ var STARTER_TASKS={
 };
 function todoKey(){return 'korea2026_todos';}
 function saveTodos(){try{localStorage.setItem(todoKey(),JSON.stringify(todoData));}catch(e){}}
-function loadTodos(){try{var d=localStorage.getItem(todoKey());if(d)todoData=JSON.parse(d);}catch(e){}TODO_CITIES.forEach(function(c){if(!todoData[c.id]){todoData[c.id]=[];if(STARTER_TASKS[c.id]){STARTER_TASKS[c.id].forEach(function(t){todoData[c.id].push({id:Date.now()+Math.random(),text:t.text,done:false,priority:t.priority,created:Date.now()});});}}});saveTodos();}
+function loadTodos(){try{var d=localStorage.getItem(todoKey());if(d)todoData=JSON.parse(d);}catch(e){}TODO_CITIES.forEach(function(c){if(!todoData[c.id]){todoData[c.id]=[];if(STARTER_TASKS[c.id]){STARTER_TASKS[c.id].forEach(function(t){todoData[c.id].push({id:String(Date.now())+'-'+String(Math.floor(Math.random()*1000000)),text:t.text,done:false,priority:t.priority,created:Date.now()});});}}});saveTodos();}
 function buildTodoSidebar(){var cl=document.getElementById('todo-city-list');var ml=document.getElementById('todo-mobile-cities');cl.innerHTML='';ml.innerHTML='';TODO_CITIES.forEach(function(c){var tasks=todoData[c.id]||[];var left=tasks.filter(function(t){return!t.done;}).length;var btn=document.createElement('button');btn.className='city-btn'+(c.id===currentTodoCity?' active':'');btn.innerHTML='<div class="city-dot" style="background:'+c.color+'"></div><span>'+c.emoji+' '+c.label+'</span><span class="city-count">'+left+'</span>';btn.onclick=(function(id){return function(){switchTodoCity(id);};})(c.id);cl.appendChild(btn);var mbtn=document.createElement('button');mbtn.className='todo-city-mobile-btn'+(c.id===currentTodoCity?' active':'');mbtn.textContent=c.emoji+' '+c.label;mbtn.onclick=(function(id){return function(){switchTodoCity(id);};})(c.id);ml.appendChild(mbtn);});}
 function switchTodoCity(id){currentTodoCity=id;currentTodoFilter='all';document.querySelectorAll('.todo-chip').forEach(function(c){c.classList.remove('on');});var chips=document.querySelectorAll('.todo-chip');if(chips[0])chips[0].classList.add('on');buildTodoSidebar();renderTodoHeader();renderTodoList();}
 function renderTodoHeader(){var c=TODO_CITIES.filter(function(x){return x.id===currentTodoCity;})[0];if(!c)return;document.getElementById('todo-hdr-dot').style.background=c.color;document.getElementById('todo-hdr-name').textContent=c.emoji+' '+c.label;document.getElementById('todo-hdr-sub').textContent=c.sub;var tasks=todoData[currentTodoCity]||[];var done=tasks.filter(function(t){return t.done;}).length;var total=tasks.length;var pct=total>0?Math.round(done/total*100):0;document.getElementById('todo-progress-fill').style.width=pct+'%';document.getElementById('todo-progress-fill').style.background=c.color;document.getElementById('todo-progress-label').textContent=done+' / '+total;document.getElementById('stat-total').textContent=total;document.getElementById('stat-done').textContent=done;document.getElementById('stat-left').textContent=total-done;}
@@ -1023,18 +1023,18 @@ if(t.dueDate){
   if(!t.done){if(diff<0)cls+=' overdue';else if(diff<=3)cls+=' soon';}
   var suffix='';
   if(!t.done){if(diff<0)suffix=' \u00b7 overdue';else if(diff===0)suffix=' \u00b7 today';else if(diff===1)suffix=' \u00b7 tmrw';}
-  dateBadge='<span class="'+cls+'" title="Click to edit date" onclick="editTodoDate(\''+t.id+'\')">📅 '+dayStr+suffix+'</span>';
+  dateBadge='<span class="'+cls+'" title="Click to edit date" onclick="editTodoDate(this.closest(\'.todo-item\').dataset.id)">📅 '+dayStr+suffix+'</span>';
 }else{
-  dateBadge='<span class="todo-date-badge none" title="Click to set date" onclick="editTodoDate(\''+t.id+'\')">+ add date</span>';
+  dateBadge='<span class="todo-date-badge none" title="Click to set date" onclick="editTodoDate(this.closest(\'.todo-item\').dataset.id)">+ add date</span>';
 }
-var qid=JSON.stringify(String(t.id));
-return '<div class="todo-item'+(t.done?' done':'')+'" id="ti-'+t.id+'">'
+var sid=String(t.id);
+return '<div class="todo-item'+(t.done?' done':'')+'" id="ti-'+sid+'" data-id="'+sid+'">'
   +'<div class="todo-drag"><div class="todo-drag-dot"></div><div class="todo-drag-dot"></div><div class="todo-drag-dot"></div></div>'
-  +'<div class="todo-check'+(t.done?' checked':'')+'" onclick="toggleTodo('+qid+')"></div>'
-  +'<div class="todo-text" title="Click to edit" onclick="startEditTodo(\''+t.id+'\')">'+escHtml(t.text)+'</div>'
+  +'<div class="todo-check'+(t.done?' checked':'')+'" onclick="toggleTodo(this.closest(\'.todo-item\').dataset.id)"></div>'
+  +'<div class="todo-text" title="Click to edit" onclick="startEditTodo(this.closest(\'.todo-item\').dataset.id)">'+escHtml(t.text)+'</div>'
   +dateBadge
-  +'<span class="todo-priority-badge '+t.priority+'" title="Click to change priority" onclick="cyclePriority(\''+t.id+'\')">'+pLabels[t.priority]+'</span>'
-  +'<button class="todo-delete" onclick="deleteTodo('+qid+')" title="Delete">\u00d7</button>'
+  +'<span class="todo-priority-badge '+t.priority+'" title="Click to change priority" onclick="cyclePriority(this.closest(\'.todo-item\').dataset.id)">'+pLabels[t.priority]+'</span>'
+  +'<button class="todo-delete" onclick="deleteTodo(this.closest(\'.todo-item\').dataset.id)" title="Delete">\u00d7</button>'
   +'</div>';
 }
 
@@ -1110,7 +1110,7 @@ window.cyclePriority=function(id){
   renderTodoList();
 };
 
-window.addTodo=function(){var input=document.getElementById('todo-input');var priority=document.getElementById('todo-priority').value;var dateEl=document.getElementById('todo-date');var dueDate=dateEl?dateEl.value:'';var text=input.value.trim();if(!text)return;if(!todoData[currentTodoCity])todoData[currentTodoCity]=[];todoData[currentTodoCity].unshift({id:Date.now()+Math.random(),text:text,done:false,priority:priority,dueDate:dueDate,created:Date.now()});input.value='';if(dateEl)dateEl.value='';input.focus();saveTodos();buildTodoSidebar();renderTodoHeader();renderTodoList();};
+window.addTodo=function(){var input=document.getElementById('todo-input');var priority=document.getElementById('todo-priority').value;var dateEl=document.getElementById('todo-date');var dueDate=dateEl?dateEl.value:'';var text=input.value.trim();if(!text)return;if(!todoData[currentTodoCity])todoData[currentTodoCity]=[];todoData[currentTodoCity].unshift({id:String(Date.now())+'-'+String(Math.floor(Math.random()*1000000)),text:text,done:false,priority:priority,dueDate:dueDate,created:Date.now()});input.value='';if(dateEl)dateEl.value='';input.focus();saveTodos();buildTodoSidebar();renderTodoHeader();renderTodoList();};
 window.toggleTodo=function(id){var tasks=todoData[currentTodoCity]||[];var t=tasks.filter(function(x){return String(x.id)===String(id);})[0];if(!t)return;t.done=!t.done;saveTodos();buildTodoSidebar();renderTodoHeader();renderTodoList();};
 window.deleteTodo=function(id){if(!todoData[currentTodoCity])return;todoData[currentTodoCity]=todoData[currentTodoCity].filter(function(t){return String(t.id)!==String(id);});saveTodos();buildTodoSidebar();renderTodoHeader();renderTodoList();};
 window.clearDone=function(){if(!todoData[currentTodoCity])return;todoData[currentTodoCity]=todoData[currentTodoCity].filter(function(t){return!t.done;});saveTodos();buildTodoSidebar();renderTodoHeader();renderTodoList();};
